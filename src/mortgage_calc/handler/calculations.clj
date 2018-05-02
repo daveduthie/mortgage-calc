@@ -22,5 +22,4 @@
     (let [id (->> [:name :price :deposit :years :interest :repayment]
                   (select-keys fields)
                   (create-calculation db))]
-      (log logger :report ::create {:name name :id id})
       [::response/created (str "/calculations/" id)])))
