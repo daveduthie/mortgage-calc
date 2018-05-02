@@ -19,7 +19,8 @@
  [:duct.migrator.ragtime/sql :mortgage-calc.migration/create-calculations]
  {:up   ["CREATE TABLE calculations
          (id SERIAL PRIMARY KEY, name TEXT,
-         price NUMERIC, deposit NUMERIC, years INTEGER, interest NUMERIC, repayment NUMERIC)"]
+         price DOUBLE PRECISION, deposit DOUBLE PRECISION, years INTEGER,
+         interest DOUBLE PRECISION, repayment DOUBLE PRECISION)"]
   :down ["DROP TABLE calculations"]}
 
  [:duct.migrator.ragtime/sql :mortgage-calc.migration/create-entries]
