@@ -5,7 +5,9 @@
   :dependencies
   [
    ;; Backend
+   [buddy/buddy-hashers "1.3.0"]
    [duct/core "0.6.2"]
+   [duct/handler.sql "0.3.1"]
    [duct/module.ataraxy "0.2.0"]
    [duct/module.cljs "0.3.2"]
    [duct/module.logging "0.3.1"]

@@ -1,18 +1,94 @@
 {:duct.core/project-ns  mortgage-calc
  :duct.core/environment :production
 
- :duct.module/logging  {}
- :duct.module.web/site {}
- :duct.module/sql      {}
- :duct.module/cljs     {:main mortgage-calc.client}
+ :duct.core/handler          {:middleware [#ig/ref :duct.middleware.web/format]}
+ :duct.middleware.web/format {}
+ :duct.module.web/site       {}
+ :duct.module/cljs           {:main mortgage-calc.client}
+ :duct.module/logging        {}
+ :duct.module/sql            {}
+
+ ;; Migrations --------------------------------------------------------
+
+ :duct.migrator/ragtime
+ {:migrations [#ig/ref :mortgage-calc.migration/create-calculations
+               #ig/ref :mortgage-calc.migration/create-entries
+               #ig/ref :mortgage-calc.migration/create-users]}
+
+ [:duct.migrator.ragtime/sql :mortgage-calc.migration/create-calculations]
+ {:up   ["CREATE TABLE calculations
+         (id SERIAL PRIMARY KEY, name TEXT,
+         price INTEGER, deposit INTEGER, term INTEGER, interest DECIMAL)"]
+  :down ["DROP TABLE calculations"]}
+
+ [:duct.migrator.ragtime/sql :mortgage-calc.migration/create-entries]
+ {:up   ["CREATE TABLE entries (id SERIAL PRIMARY KEY, description TEXT)"]
+  :down ["DROP TABLE entries"]}
+
+ [:duct.migrator.ragtime/sql :mortgage-calc.migration/create-users]
+ {:up   ["CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT UNIQUE, password TEXT)"]
+  :down ["DROP TABLE users"]}
+
+ ;; Routing -----------------------------------------------------------
 
  :duct.module/ataraxy
- {[:get "/"]    [:index]
-  [:get "/app"] [:app]}
+ {
+  ;; real routes
+  [:get "/"]                 [:app]
+  [:get "/calculations"]     [:calculations/list]
+  [:get "/calculations/" id] [:calculations/find ^int id]
 
+  [:post "/calculations" {{:keys [name price deposit term interest]} :body-params}]
+  [:calculations/create name price deposit term interest]
 
- [:duct.handler.static/ok :mortgage-calc.handler/index]
- {:body {:entries "/entries"}}
+  ;; test routes
+  [:get "/entries"]        [:entries/list]
+  [:get "/entries/" id]    [:entries/find    ^int id]
+  [:delete "/entries/" id] [:entries/destroy ^int id]
 
- :mortgage-calc.handler/app
- {:db #ig/ref :duct.database/sql}}
+  [:post "/entries" {{:keys [description]} :body-params}]
+  [:entries/create description]
+
+  [:post "/users" {{:keys [email password]} :body-params}]
+  [:users/create email password]
+  }
+
+ ;; Handlers ----------------------------------------------------------
+
+ ;; real handlers
+ :mortgage-calc.handler/app {}
+
+ [:duct.handler.sql/query :mortgage-calc.handler.calculations/list]
+ {:sql ["SELECT * FROM calculations"]}
+
+ [:duct.handler.sql/query-one :mortgage-calc.handler.calculations/find]
+ {:request {[_ id] :ataraxy/result}
+  :sql     ["SELECT * FROM calculations WHERE id = ?;" id]
+  :hrefs   {:href "/calculations/{id}"}}
+
+ :mortgage-calc.handler.calculations/create
+ {:db     #ig/ref :duct.database/sql
+  :logger #ig/ref :duct/logger}
+
+ ;; test handlers
+ [:duct.handler.sql/query :mortgage-calc.handler.entries/list]
+ {:sql   ["SELECT * FROM entries;"]
+  :hrefs {:href "/entries/{id}"}}
+
+ [:duct.handler.sql/insert :mortgage-calc.handler.entries/create]
+ {:request  {[_ description] :ataraxy/result}
+  :sql      ["INSERT INTO entries (description) VALUES (?) RETURNING id;" description]
+  :location "/entries/{id}"}
+
+ [:duct.handler.sql/query-one :mortgage-calc.handler.entries/find]
+ {:request {[_ id] :ataraxy/result}
+  :sql     ["SELECT * FROM entries WHERE id = ?;" id]
+  :hrefs   {:href "/entries/{id}"}}
+
+ [:duct.handler.sql/execute :mortgage-calc.handler.entries/destroy]
+ {:request {[_ id] :ataraxy/result}
+  :sql     ["DELETE FROM entries WHERE id = ?;" id]}
+
+ :mortgage-calc.handler.users/create
+ {:db #ig/ref :duct.database/sql}
+ }
