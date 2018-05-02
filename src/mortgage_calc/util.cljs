@@ -3,6 +3,14 @@
    [goog.string :as gstring]
    [goog.string.format :as gformat]))
 
+(enable-console-print!)
+
+;; Miscellaneous ------------------------------------------------------
+
+(defn log-error
+  [e]
+  (.error js/console (str "error:" e)))
+
 (defn pow [n pow]
   (.pow js/Math n pow))
 
@@ -18,28 +26,15 @@
   [amt]
   (str "R " (gstring/format "%.2f" amt)))
 
-(defn row [label input]
-  [:div.row
-   [:div.col-md-2 [:label label]]
-   [:div.col-md-5 input]])
-
-(defn numeric-input
-  [label id]
-  (row label [:input.form-control {:field :numeric
-                                   :id    [id]
-                                   :fmt   "%.2f"}]))
+;; Calculation --------------------------------------------------------
 
 (defn normalise-input
-  [{:keys [:mortgage-calc.components.input/purchase-price
-           :mortgage-calc.components.input/deposit
-           :mortgage-calc.components.input/years
-           :mortgage-calc.components.input/quoted-interest-rate
-           :mortgage-calc.components.input/monthly-repayment]}]
+  [{:keys [price deposit years interest repayment]}]
   {:term     (* years 12)
-   :r        (/ quoted-interest-rate 12 100)
-   :c        monthly-repayment
-   :c-annual (* monthly-repayment 12)
-   :P        (- purchase-price deposit)})
+   :r        (/ interest 12 100)
+   :c        repayment
+   :c-annual (* repayment 12)
+   :P        (- price deposit)})
 
 (defn principal-at-month [r c P n]
   (let [factor (pow (inc r) n)]
@@ -51,6 +46,7 @@
   (mapv (fn [n] (principal-at-month r c P n))
         (range 0 (+ term 2) 12)))
 
+;; FIXME: I'm ugly
 (defn annual-splits
   [doc]
   (let [normalised       (normalise-input doc)
@@ -61,7 +57,7 @@
            accum    []]
       (if p
         (let [principal-repaid  (round-currency (- p-last p))
-              interest-serviced (if-not (zero? principal-repaid)
+              interest-serviced (if-not (= p p-last)
                                   (round-currency
                                    (- annual-repayment principal-repaid))
                                   0)]

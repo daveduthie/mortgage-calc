@@ -7,21 +7,20 @@
    [integrant.core :as ig]))
 
 (defprotocol Calculations
-  (create-calculation [db name price deposit term interest]))
+  (create-calculation [db fields]))
 
 (extend-protocol Calculations
   duct.database.sql.Boundary
-  (create-calculation [{db :spec} name price deposit term interest]
-    (let [results (jdbc/insert! db :calculations
-                                {:name     name
-                                 :price    price
-                                 :deposit  deposit
-                                 :term     term
-                                 :interest interest})]
+  ;; TODO: validation
+  (create-calculation [{db :spec} fields]
+    (let [results (jdbc/insert! db :calculations fields)]
       (-> results ffirst val))))
 
 (defmethod ig/init-key ::create [_ {:keys [db logger]}]
-  (fn [{[_ name price deposit term interest] :ataraxy/result}]
-    (let [id (create-calculation db name price deposit term interest)]
+  (fn [{[_ fields] :ataraxy/result}]
+    (log logger :report ::create {:fields fields})
+    (let [id (->> [:name :price :deposit :years :interest :repayment]
+                  (select-keys fields)
+                  (create-calculation db))]
       (log logger :report ::create {:name name :id id})
       [::response/created (str "/calculations/" id)])))

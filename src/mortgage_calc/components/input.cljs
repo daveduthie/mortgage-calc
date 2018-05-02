@@ -1,102 +1,130 @@
 (ns mortgage-calc.components.input
   (:require
+   [ajax.core :refer [GET POST]]
    [mortgage-calc.components.graph :as graph]
    [mortgage-calc.components.table :as table]
+   [mortgage-calc.events :as ev]
    [mortgage-calc.util :as util]
    [reagent-forms.core :as forms]
    [reagent.core :as r]))
 
-(def form-template
-  [:div
-   (util/numeric-input "Purchase price" ::purchase-price)
-   (util/numeric-input "Deposit paid" ::deposit)
-
-   ;; (util/numeric-input "Bond term in years" ::years)
-   (util/row
-    [:label
-     {:field :label
-      :preamble "Term of the bond in years: "
-      :placeholder "N/A"
-      :id [::years]}]
-    [:input.form-control
-     {:field :range :min 1 :max 20 :id [::years]}])
-   (util/numeric-input "Quoted annual interest rate" ::quoted-interest-rate)])
-
-(def input-form-events
-  #{::purchase-price
-    ::deposit
-    ::years
-    ::quoted-interest-rate})
-
 (defn calculate-repayment
-  [{::keys [quoted-interest-rate years purchase-price deposit]}]
-  (let [term          (* years 12)
-        interest-rate (/ quoted-interest-rate 12 100)
-        factor        (util/pow (inc interest-rate) term)]
-    (if (zero? interest-rate)
-      (/ purchase-price term)
-      (/ (* interest-rate (- purchase-price deposit) factor)
+  [{:keys [interest years price deposit]}]
+  (let [term         (* years 12)
+        monthly-rate (/ interest 12 100)
+        factor       (util/pow (inc monthly-rate) term)]
+    (if (zero? monthly-rate)
+      (/ price term)
+      (/ (* monthly-rate (- price deposit) factor)
          (dec factor)))))
 
-(defn input-form [doc event-receiver]
-  (fn [doc event-receiver]
-    [:div
-     [:hr]
-     [forms/bind-fields
-      form-template
-      doc
-      (fn [[id] val _]
-        (event-receiver id val) @doc)
-      (fn [_ _ _]
-        (when (every? @doc input-form-events)
-          (event-receiver ::monthly-repayment
-                          (calculate-repayment @doc)) @doc))]
+(def kw-prefix :mortgage-calc.components.input)
+(def doc (r/cursor ev/app-state [kw-prefix]))
 
-     (when-let [repayment (::monthly-repayment @doc)]
-       (util/row "Monthly repayment" (util/format-rands repayment)))
-     [:hr]
+(ev/register-simple-event-handler ::name)
+(ev/register-simple-event-handler ::price)
+(ev/register-simple-event-handler ::deposit)
+(ev/register-simple-event-handler ::years)
+(ev/register-simple-event-handler ::interest)
+(ev/register-simple-event-handler ::repayment)
+(ev/register-simple-event-handler ::view-type)
 
-     (util/row ""
-               [:div
-                [:button.btn.btn-success
-                 {:on-click #(event-receiver ::view-type :table)}
-                 "table view"]
-                [:button.btn.btn-success
-                 {:on-click #(event-receiver ::view-type :graph)}
-                 "graph view"]])]))
+;; TODO: validation
+(defn save-calculation! [fields handler]
+  (POST "/calculations"
+        {:params
+         (select-keys fields [:name :price :deposit :years :interest :repayment])
+         :handler       handler
+         :error-handler util/log-error}))
 
+(defn row [label input]
+  [:div.row
+   [:div.col-md-2 [:label label]]
+   [:div.col-md-5 input]])
+
+(defn input [label type id]
+  ;; (prn :input-with id)
+  (row label [:input.form-control {:field type :id id}]))
+
+(defn numeric-input
+  [label id]
+  ;; (prn :input-with id)
+  (row label [:input.form-control {:field :numeric
+                                   :id    id
+                                   :fmt   "%.2f"}]))
+
+(def form-template
+  [:div
+   (input "Name" :text :name)
+   (numeric-input "Purchase price" :price)
+   (numeric-input "Deposit paid" :deposit)
+   (row
+    [:label
+     {:field       :label
+      :preamble    "Term of the bond in years: "
+      :placeholder "0"
+      :id          :years}]
+    [:input.form-control
+     {:field :range :min 1 :max 20 :id :years}])
+   (numeric-input "Quoted annual interest rate" :interest)])
+
+(def input-fields [:name :price :deposit :years :interest])
+
+(defn form-complete?
+  [doc]
+  (every? doc input-fields))
+
+(defn input-form
+  []
+  [:div
+   [:hr]
+   [forms/bind-fields
+    form-template
+    doc
+    (fn [[id] val _]
+      (ev/emit [kw-prefix id] val))
+    (fn [_ _ _]
+      (when (form-complete? @doc)
+        ;; FIXME: go through event mechanism
+        ;; Why does (emit ::repayment ...) work?
+        (ev/emit ::plz-fixme nil)
+        (swap! doc assoc :repayment (calculate-repayment @doc))))]
+
+   (when-let [repayment (:repayment @doc)]
+     (row "Monthly repayment" (util/format-rands repayment)))
+
+   [:hr]
+   [:div.row
+    [:div.col-md-2]
+    [:div.col-sm-2
+     [:input.btn.btn-primary
+      {:type     :submit
+       :on-click (fn [e] (save-calculation! @doc #(js/alert "Saved")))
+       :value    "save"}]]
+    [:div.col-sm-2
+     [:input.btn.btn-secondary
+      {:type     :submit
+       :on-click (fn [e] (ev/emit ::view-type :table))
+       :value    "table view"}]]
+    [:div.col-sm-2
+     [:input.btn.btn-secondary
+      {:type     :submit
+       :on-click (fn [e] (ev/emit ::view-type :graph))
+       :value    "graph view"}]]]
+   [:hr]
+   ])
 
 (defn calculation-view
-  [doc event-receiver]
-  ;; Prevent recalculating splits on every event.
-  ;; A cursor over several keys would obviate the need for this hack.
-  (let [last-repayment (r/atom nil)]
-    (fn []
-      (let [repayment (::monthly-repayment @doc)]
-        (when (not= repayment @last-repayment)
-          (reset! last-repayment repayment)
-          #_
-          (event-receiver ::annual-splits (util/annual-splits @doc))))
-
-      (let [splits   (util/annual-splits @doc)
-            #_(r/cursor doc [::annual-splits])
-            view-type (r/cursor doc [::view-type])]
-        (prn :send)
-        (case @view-type
-          :table [table/table-view splits]
-          :graph [graph/graph-view splits]
-          [:div]))))
-
-  #_
-  (let [splits (util/annual-splits @doc)
-        view-type (::view-type @doc)]
-    (case view-type
-      :table [table/table-view @splits]
-      :graph [graph/graph-view {:splits @splits}]
-      [:div])))
+  []
+  (if (:repayment @doc)
+    (let [splits (util/annual-splits @doc) ]
+      (case (:view-type @doc)
+        :table [table/table-view splits]
+        :graph [graph/graph-view splits]
+        [:div]))))
 
 (defn input-page
-  [doc event-receiver]
+  []
   [:div
-   [input-form doc event-receiver]
-   [calculation-view doc event-receiver]])
+   [input-form]
+   [calculation-view]])

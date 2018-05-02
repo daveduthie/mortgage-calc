@@ -1,29 +1,13 @@
 (ns mortgage-calc.client
   (:require
    [accountant.core :as accountant]
-   [goog.events :as events]
-   [goog.history.EventType :as HistoryEventType]
    [mortgage-calc.components.input :as input]
    [mortgage-calc.components.saved :as saved]
+   [mortgage-calc.events :as ev]
    [reagent.core :as r]
-   [secretary.core :as secretary])
-  (:import
-   goog.History
-   goog.history.EventType))
+   [secretary.core :as secretary]))
 
 (enable-console-print!)
-
-;; State and events ---------------------------------------------------
-
-
-(defonce app-state (r/atom {}))
-
-(defn event-handler [state event-name value]
-  (assoc state event-name value))
-
-(defn emit [event-name val]
-  (println event-name)
-  (r/rswap! app-state event-handler event-name val))
 
 ;; Routes and history -------------------------------------------------
 
@@ -33,7 +17,7 @@
    [:a {:href uri} title]])
 
 (defn navbar []
-  (let [collapsed? (r/cursor app-state [::collapsed])]
+  (let [collapsed? (r/cursor ev/app-state [::collapsed])]
     (fn []
       [:nav.navbar.navbar-light.bg-primary
        [:a.navbar-brand.text-dark {:href "/"} "Mortgage Calculator"]
@@ -41,27 +25,32 @@
 
 ;; Routes and history -------------------------------------------------
 
+(ev/register-event-handler
+ ::current-page
+ #(assoc %1 ::current-page %2))
+
 (secretary/defroute "/" []
-  (emit ::current-page :input-page))
+  (ev/emit ::current-page :input-page))
 
 (secretary/defroute "/view-saved" []
-  (emit ::current-page :view-saved))
+  (ev/emit ::current-page :view-saved))
 
 (def pages
-  {:input-page [input/input-page app-state emit]
-   :view-saved [saved/view-saved app-state emit]})
+  {:input-page #'input/input-page
+   :view-saved #'saved/view-saved})
 
 ;; Bootstrap ----------------------------------------------------------
 
 (defn app
-  [app-state]
+  []
   [:div
    [navbar]
    [:div.container
-    [pages (::current-page @app-state)]]])
+    [(pages (::current-page @ev/app-state))]]])
 
 (defn ^:export init
   []
+  (prn :reloading)
   (accountant/configure-navigation!
    {:nav-handler
     (fn [path]
@@ -70,6 +59,6 @@
     (fn [path]
       (secretary/locate-route path))})
   (accountant/dispatch-current!)
+  (r/render [#'app] (js/document.getElementById "app")))
 
-  (r/render [#'app app-state]
-            (js/document.getElementById "app")))
+(init)

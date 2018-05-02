@@ -11,7 +11,7 @@
         interests  (mapv :interest-serviced splits)
         labels     (take (count splits) (iterate inc 2019))]
     (clj->js
-     {:type    "bar"
+     {:type    "line"
       :data    {:labels   labels
                 :datasets [{:label           "Principal repaid"
                             :data            principals
@@ -28,7 +28,7 @@
         update
         (fn [comp]
           (let [{:keys [splits]} (r/props comp)
-                splits           (rest splits)
+                splits           (rest splits) ; time zero is always empty
                 labels           (take (count splits) (iterate inc 2019))
                 ctx              (-> js/document
                                      (.getElementById "graph")

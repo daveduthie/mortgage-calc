@@ -17,6 +17,7 @@
    [org.postgresql/postgresql "42.1.4"]
 
    ;; Frontend
+   [cljs-ajax "0.7.3"]
    [org.webjars/bootstrap "4.1.0"]
    [reagent "0.8.0"]
    [reagent-forms "0.5.40"]

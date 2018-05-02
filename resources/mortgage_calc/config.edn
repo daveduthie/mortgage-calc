@@ -1,12 +1,13 @@
 {:duct.core/project-ns  mortgage-calc
  :duct.core/environment :production
 
- :duct.core/handler          {:middleware [#ig/ref :duct.middleware.web/format]}
- :duct.middleware.web/format {}
- :duct.module.web/site       {}
- :duct.module/cljs           {:main mortgage-calc.client}
- :duct.module/logging        {}
- :duct.module/sql            {}
+ :duct.core/handler            {:middleware [#ig/ref :duct.middleware.web/format]}
+ :duct.middleware.web/defaults {:security {:anti-forgery false}}
+ :duct.middleware.web/format   {}
+ :duct.module.web/site         {}
+ :duct.module/cljs             {:main mortgage-calc.client}
+ :duct.module/logging          {}
+ :duct.module/sql              {}
 
  ;; Migrations --------------------------------------------------------
 
@@ -18,7 +19,7 @@
  [:duct.migrator.ragtime/sql :mortgage-calc.migration/create-calculations]
  {:up   ["CREATE TABLE calculations
          (id SERIAL PRIMARY KEY, name TEXT,
-         price INTEGER, deposit INTEGER, term INTEGER, interest DECIMAL)"]
+         price NUMERIC, deposit NUMERIC, years INTEGER, interest NUMERIC, repayment NUMERIC)"]
   :down ["DROP TABLE calculations"]}
 
  [:duct.migrator.ragtime/sql :mortgage-calc.migration/create-entries]
@@ -38,8 +39,8 @@
   [:get "/calculations"]     [:calculations/list]
   [:get "/calculations/" id] [:calculations/find ^int id]
 
-  [:post "/calculations" {{:keys [name price deposit term interest]} :body-params}]
-  [:calculations/create name price deposit term interest]
+  [:post "/calculations" {fields :body-params}]
+  [:calculations/create fields]
 
   ;; test routes
   [:get "/entries"]        [:entries/list]
