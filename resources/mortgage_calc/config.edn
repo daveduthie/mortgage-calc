@@ -1,0 +1,18 @@
+{:duct.core/project-ns  mortgage-calc
+ :duct.core/environment :production
+
+ :duct.module/logging  {}
+ :duct.module.web/site {}
+ :duct.module/sql      {}
+ :duct.module/cljs     {:main mortgage-calc.client}
+
+ :duct.module/ataraxy
+ {[:get "/"]    [:index]
+  [:get "/app"] [:app]}
+
+
+ [:duct.handler.static/ok :mortgage-calc.handler/index]
+ {:body {:entries "/entries"}}
+
+ :mortgage-calc.handler/app
+ {:db #ig/ref :duct.database/sql}}
