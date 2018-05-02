@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS calculations
+    (id SERIAL PRIMARY KEY, name TEXT,
+     price DOUBLE PRECISION, deposit DOUBLE PRECISION,
+     years INTEGER, interest DOUBLE PRECISION, repayment DOUBLE PRECISION);
