@@ -1,9 +1,9 @@
 (ns mortgage-calc.components.graph
   (:require
+   [cljsjs.chartjs]
+   ;; [cljsjs.chartist]
    [mortgage-calc.util :as util]
-   [reagent.core :as r])
-  (:import
-   goog.object))
+   [reagent.core :as r]))
 
 (defn make-config
   [splits]
@@ -23,7 +23,8 @@
                             :borderWidth     1}]}
       :options {:scales {:yAxes [{:stacked true}]}}})))
 
-(defn graph-inner [graph]
+(defn graph-inner
+  []
   (let [local (r/atom nil)
         update
         (fn [comp]
