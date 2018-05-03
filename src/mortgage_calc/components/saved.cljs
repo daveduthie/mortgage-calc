@@ -28,10 +28,10 @@
 
 (defn view-saved-btns
   [calc]
-  [:ul
-   [:li [:button.btn.btn-link
+  [:div
+   [:p [:button.btn.btn-link
          {:on-click #(ev/emit ::view [:table calc])} "view table"]]
-   [:li [:button.btn.btn-link
+   [:p [:button.btn.btn-link
          {:on-click #(ev/emit ::view [:graph calc])} "view graph"]]])
 
 (defn view-saved
@@ -43,9 +43,10 @@
       [:div.row
        [:div.col-md-3
         (into
-         [:ul]
+         [:ul.list-group]
          (for [c (:saved-calcs @doc)]
-           ^{:key c} [:li (str (:id c) " : " (:name c) " ")
+           ^{:key c} [:li.list-group-item
+                      (str (:name c) " (" (:id c) ")")
                       [view-saved-btns c]]))]
        [:div.col-md-7
         (when-let [[type calc] (:view @doc)]

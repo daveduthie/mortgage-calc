@@ -11,17 +11,15 @@
 
 ;; Routes and history -------------------------------------------------
 
-(defn nav-link [uri title page collapsed?]
-  [:button.btn.button-default.navbar-button
-   {:type :button}
-   [:a {:href uri} title]])
+(defn nav-link [uri title]
+  [:a.text-light
+   {:href uri}
+   title])
 
 (defn navbar []
-  (let [collapsed? (r/cursor ev/app-state [::collapsed])]
-    (fn []
-      [:nav.navbar.navbar-light.bg-primary
-       [:a.navbar-brand.text-dark {:href "/"} "Mortgage Calculator"]
-       [nav-link "/view-saved" "View saved calculations" :stock collapsed?]])))
+  [:nav.navbar.bg-dark
+   [:a.navbar-brand.text-light {:href "/"} "Mortgage Calculator"]
+   [nav-link "/view-saved" "View saved calculations"]])
 
 ;; Routes and history -------------------------------------------------
 
