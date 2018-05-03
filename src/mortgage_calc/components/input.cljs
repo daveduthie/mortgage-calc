@@ -72,7 +72,7 @@
 
 (defn form-complete?
   [doc]
-  (every? doc input-fields))
+  (and doc (every? doc input-fields)))
 
 (defn input-form
   []
@@ -94,28 +94,33 @@
      (row "Monthly repayment" (util/format-rands repayment)))
 
    [:hr]
-   [:div.row
-    [:div.col-md-2]
-    [:div.col-sm-2
-     [:input.btn.btn-primary
-      {:type     :submit
-       :on-click (fn [e] (save-calculation! @doc #(js/alert "Saved")))
-       :value    "save"}]]
-    [:div.col-sm-2
-     [:input.btn.btn-secondary
-      {:type     :submit
-       :on-click (fn [e] (ev/emit ::view-type :table))
-       :value    "view table"}]]
-    [:div.col-sm-2
-     [:input.btn.btn-secondary
-      {:type     :submit
-       :on-click (fn [e] (ev/emit ::view-type :graph))
-       :value    "view graph"}]]]
+   (let [incomplete? (not (form-complete? @doc))]
+     [:div.row
+      [:div.col-md-2]
+      [:div.col-sm-2
+       [:input.btn.btn-primary
+        {:type     :submit
+         :disabled incomplete?
+         ;; TODO: go through event mechanism?
+         :on-click (fn [e] (save-calculation! @doc #(js/alert "Saved")))
+         :value    "save"}]]
+      [:div.col-sm-2
+       [:input.btn.btn-secondary
+        {:type     :submit
+         :disabled incomplete?
+         :on-click (fn [e] (ev/emit ::view-type :table))
+         :value    "view table"}]]
+      [:div.col-sm-2
+       [:input.btn.btn-secondary
+        {:type     :submit
+         :disabled incomplete?
+         :on-click (fn [e] (ev/emit ::view-type :graph))
+         :value    "view graph"}]]])
    [:hr]
    ])
 
 (defn calculation-view
-  [doc]
+  []
   (if (:repayment @doc)
     (let [splits (util/annual-splits @doc) ]
       (case (:view-type @doc)
@@ -127,4 +132,4 @@
   []
   [:div
    [input-form]
-   [calculation-view doc]])
+   [calculation-view]])
