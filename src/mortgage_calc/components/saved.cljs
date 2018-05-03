@@ -1,7 +1,9 @@
 (ns mortgage-calc.components.saved
   (:require
    [ajax.core :refer [GET]]
+   [mortgage-calc.components.graph :as graph]
    [mortgage-calc.components.input :as input]
+   [mortgage-calc.components.table :as table]
    [mortgage-calc.events :as ev]
    [mortgage-calc.util :as util]
    [reagent.core :as r]))
@@ -22,14 +24,34 @@
           (ev/emit ::saved-calcs results))
         :error-handler   util/log-error}))
 
+(ev/register-simple-event-handler ::view)
+
+(defn view-saved-btns
+  [calc]
+  [:ul
+   [:li [:button.btn.btn-link
+         {:on-click #(ev/emit ::view [:table calc])} "view table"]]
+   [:li [:button.btn.btn-link
+         {:on-click #(ev/emit ::view [:graph calc])} "view graph"]]])
+
 (defn view-saved
   []
-  (let [calcs (r/cursor ev/app-state [kw-prefix])
+  (let [doc (r/cursor ev/app-state [kw-prefix])
         _     (list-calculations)]
     (fn []
       (prn :ball-rolling)
-      [:div
-       (into
-        [:ul]
-        (for [c (:saved-calcs @calcs)]
-          ^{:key c} [:li (str c)]))])))
+      [:div.row
+       [:div.col-md-3
+        (into
+         [:ul]
+         (for [c (:saved-calcs @doc)]
+           ^{:key c} [:li (str (:id c) " : " (:name c) " ")
+                      [view-saved-btns c]]))]
+       [:div.col-md-7
+        (when-let [[type calc] (:view @doc)]
+          (let [splits (util/annual-splits calc)]
+            (prn :t type :c calc)
+            (case type
+              :table [table/table-view splits]
+              :graph [graph/graph-view splits]
+              [:div])))]])))

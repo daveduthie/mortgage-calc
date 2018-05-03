@@ -66,7 +66,7 @@
       :id          :years}]
     [:input.form-control
      {:field :range :min 1 :max 20 :id :years}])
-   (numeric-input "Quoted annual interest rate" :interest)])
+   (numeric-input "Quoted annual interest rate (%)" :interest)])
 
 (def input-fields [:name :price :deposit :years :interest])
 
@@ -105,17 +105,17 @@
      [:input.btn.btn-secondary
       {:type     :submit
        :on-click (fn [e] (ev/emit ::view-type :table))
-       :value    "table view"}]]
+       :value    "view table"}]]
     [:div.col-sm-2
      [:input.btn.btn-secondary
       {:type     :submit
        :on-click (fn [e] (ev/emit ::view-type :graph))
-       :value    "graph view"}]]]
+       :value    "view graph"}]]]
    [:hr]
    ])
 
 (defn calculation-view
-  []
+  [doc]
   (if (:repayment @doc)
     (let [splits (util/annual-splits @doc) ]
       (case (:view-type @doc)
@@ -127,4 +127,4 @@
   []
   [:div
    [input-form]
-   [calculation-view]])
+   [calculation-view doc]])
