@@ -1,29 +1,20 @@
 # mortgage-calc
 
-FIXME: description
-
 ## Developing
 
 ### Setup
 
-When you first clone this repository, run:
+The app will look for environment variables to configure the database connection (required) and HTTP port (defaults to 3000). I use direnv to set these when running the app locally:
 
-```sh
-lein duct setup
 ```
-
-This will create files for local configuration, and prep your system
-for the project.
-
-Next connect the repository to the [Heroku][] app:
-
-```sh
-heroku git:remote -a FIXME
+# .envrc
+export DATABASE_URL="jdbc:postgresql://localhost/mortgage?user=mortgage"
+export PORT=3000
 ```
-
-[heroku]: https://www.heroku.com/
 
 ### Environment
+
+> This is all part of the original README, but it still stands
 
 To begin developing, start with a REPL.
 
@@ -85,6 +76,20 @@ But you can also run tests through Leiningen.
 lein test
 ```
 
+## Deploying
+
+The app is running on Heroku.
+
+If you have the Heroku toolbelt installed, you can simulate that by doing:
+
+```sh
+lein uberjar
+export DATABSE_URL="SOME-SQL-DB"
+heroku local
+```
+
+and browsing to `localhost://3000`.
+
 ## Legal
 
-Copyright © 2018 FIXME
+Copyright © 2018 David Duthie
