@@ -19,16 +19,12 @@
                           :borderWidth     1}]}
     :options {:scales {:yAxes [{:stacked true}]}}}))
 
-;; FIXME: this fiddling around inside a js object fails under advanced compilation
 (defn set-data!
   [graph splits]
-  (let [labels         (take (count splits) (iterate inc 2019))
-        data           (.-data graph)
-        principal-data (-> data .-datasets (aget 0))
-        interest-data  (-> data .-datasets (aget 1))]
-    (set! (.-labels data) (clj->js labels))
-    (set! (.-data principal-data) (clj->js (mapv :principal-repaid splits)))
-    (set! (.-data interest-data) (clj->js (mapv :interest-serviced splits)))
+  (let [labels         (clj->js (take (count splits) (iterate inc 2019)))
+        principals     (clj->js (mapv :principal-repaid splits))
+        interests      (clj->js (mapv :interest-serviced splits))]
+    (js/setData graph labels principals interests)
     (.update graph)))
 
 (defn graph-inner

@@ -11,7 +11,16 @@
   </head>
   <body>
     <div id="app"></div>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script> -->
+    <script>
+      function setData(graph, labels, principals, interests) {
+	data = graph.data;
+	pData = data.datasets[0];
+	iData = data.datasets[1];
+	data.labels = labels;
+	pData.data = principals;
+	iData.data = interests;
+      }
+    </script>
     <script src="/js/main.js"></script>
     <!-- <script>mortgage_calc.client.init()</script> -->
   </body>
