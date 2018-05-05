@@ -18,8 +18,6 @@
 
    ;; Frontend
    [cljs-ajax "0.7.3"]
-   ;; pick one
-   ;; [cljsjs/chartist "0.10.1-0"]
    [cljsjs/chartjs "2.7.0-0"]
    [org.webjars/bootstrap "4.1.0"]
    [reagent "0.8.0"]
