@@ -28,6 +28,7 @@
    [secretary "1.2.3"]
    [venantius/accountant "0.2.4"]
    ]
+  :jvm-opts ["-Dclojure.server.repl={:port 5555 :accept clojure.core.server/repl}"]
   :plugins [[duct/lein-duct "0.10.6"]]
   :main ^:skip-aot mortgage-calc.main
   :uberjar-name  "mortgage-calc-standalone.jar"
