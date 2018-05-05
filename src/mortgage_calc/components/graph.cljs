@@ -1,9 +1,10 @@
 (ns mortgage-calc.components.graph
   (:require
    [cljsjs.chartjs]
-   ;; [cljsjs.chartist]
    [mortgage-calc.util :as util]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [goog.object :as obj]
+   ))
 
 (def config
   (clj->js
@@ -17,18 +18,20 @@
                           :data            []
                           :backgroundColor "rgba(255, 0, 0, 0.4)"
                           :borderWidth     1}]}
-    :options {:scales {:yAxes [{:stacked true}]}}}))
+    :options {:scales    {:yAxes [{:stacked true}]}
+              :animation {:duration 250
+                          :easing   "easeOutQuint"}}}))
 
 ;; FIXME: this fiddling around inside a js object fails under advanced compilation
 (defn set-data!
   [graph splits]
   (let [labels         (take (count splits) (iterate inc 2019))
-        data           (.-data graph)
-        principal-data (-> data .-datasets (aget 0))
-        interest-data  (-> data .-datasets (aget 1))]
-    (set! (.-labels data) (clj->js labels))
-    (set! (.-data principal-data) (clj->js (mapv :principal-repaid splits)))
-    (set! (.-data interest-data) (clj->js (mapv :interest-serviced splits)))
+        data           (obj/get graph "data")
+        principal-data (obj/getValueByKeys  data "datasets" 0)
+        interest-data  (obj/getValueByKeys  data "datasets" 1)]
+    (obj/set data "labels" (clj->js labels))
+    (obj/set principal-data "data" (clj->js (mapv :principal-repaid splits)))
+    (obj/set interest-data "data" (clj->js (mapv :interest-serviced splits)))
     (.update graph)))
 
 (defn graph-inner
