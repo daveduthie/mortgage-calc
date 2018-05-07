@@ -1,0 +1,27 @@
+{
+  "name": "mortgage-calc",
+  "version": "1.0.0",
+  "description": "## Developing",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daveduthie/mortgage-calc.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/daveduthie/mortgage-calc/issues"
+  },
+  "homepage": "https://github.com/daveduthie/mortgage-calc#readme",
+  "devDependencies": {
+    "karma": "^2.0.2",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-cljs-test": "^0.1.0"
+  }
+}

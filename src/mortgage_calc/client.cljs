@@ -57,6 +57,7 @@
     (fn [path]
       (secretary/locate-route path))})
   (accountant/dispatch-current!)
-  (r/render [#'app] (js/document.getElementById "app")))
+  (when-let [root (js/document.getElementById "app")]
+    (r/render [#'app] root)))
 
 (init)

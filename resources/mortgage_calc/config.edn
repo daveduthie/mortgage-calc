@@ -93,4 +93,8 @@
 
  :mortgage-calc.handler.users/create
  {:db #ig/ref :duct.database/sql}
- }
+
+ :mortgage-calc.test-runner/test {:out        "test-out"
+                                  :src-paths  ["src" "test"]
+                                  :no-op?     false
+                                  :karma-port 9000}}
