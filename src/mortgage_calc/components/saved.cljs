@@ -18,7 +18,8 @@
   ;; TODO: why does :transit response format not
   ;; decode values of :interest key properly
   (GET "/calculations"
-       {:response-format :transit
+       {
+        ;; :response-format :transit
         :handler
         (fn [results]
           (ev/emit ::saved-calcs results))

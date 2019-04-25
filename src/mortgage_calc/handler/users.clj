@@ -4,7 +4,8 @@
    [buddy.hashers :as hashers]
    [clojure.java.jdbc :as jdbc]
    [duct.database.sql]
-   [integrant.core :as ig]))
+   [integrant.core :as ig])
+  (:import (duct.database.sql Boundary)))
 
 (defprotocol Users
   (create-user [db email password]))

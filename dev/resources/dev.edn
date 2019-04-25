@@ -1,2 +1,3 @@
-{:duct.core/environment :development
- :duct.core/include ["mortgage_calc/config"]}
+{:duct.middleware.web/defaults {:security {:anti-forgery false}}
+ :duct.database/sql
+ {:connection-uri "jdbc:sqlite:db/dev.sqlite"}}

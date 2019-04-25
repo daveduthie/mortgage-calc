@@ -1,11 +1,12 @@
 (ns mortgage-calc.client
   (:require
-   [accountant.core :as accountant]
    [mortgage-calc.components.input :as input]
    [mortgage-calc.components.saved :as saved]
    [mortgage-calc.events :as ev]
    [reagent.core :as r]
-   [secretary.core :as secretary]))
+   [reitit.core :as reitit]
+   [reitit.frontend.easy :as reitit.frontend])
+  (:import goog.History))
 
 (enable-console-print!)
 
@@ -23,19 +24,23 @@
 
 ;; Routes and history -------------------------------------------------
 
-(ev/register-event-handler
- ::current-page
- #(assoc %1 ::current-page %2))
-
-(secretary/defroute "/" []
-  (ev/emit ::current-page :input-page))
-
-(secretary/defroute "/view-saved" []
-  (ev/emit ::current-page :view-saved))
+(def router
+  (reitit/router
+   [["/" :input-page]
+    ["/view-saved" :view-saved]]))
 
 (def pages
   {:input-page #'input/input-page
    :view-saved #'saved/view-saved})
+
+(ev/register-event-handler ::current-page #(assoc %1 ::current-page %2))
+
+(defn hook-browser-navigation! []
+  (reitit.frontend/start!
+   router
+   (fn [match _]
+     (ev/emit ::current-page (:name (:data match))))
+   {:use-fragment false}))
 
 ;; Bootstrap ----------------------------------------------------------
 
@@ -44,19 +49,13 @@
   [:div
    [navbar]
    [:div.container
-    [(pages (::current-page @ev/app-state))]]])
+    (when-let [page (pages (::current-page @ev/app-state))]
+      [page])]])
 
 (defn ^:export init
   []
   (prn :reloading)
-  (accountant/configure-navigation!
-   {:nav-handler
-    (fn [path]
-      (secretary/dispatch! path))
-    :path-exists?
-    (fn [path]
-      (secretary/locate-route path))})
-  (accountant/dispatch-current!)
+  (hook-browser-navigation!)
   (r/render [#'app] (js/document.getElementById "app")))
 
 (init)

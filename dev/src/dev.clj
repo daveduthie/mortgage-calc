@@ -1,38 +1,31 @@
 (ns dev
   (:refer-clojure :exclude [test])
-  (:require
-   [clojure.java.io :as io]
-   [clojure.java.jdbc :as jdbc]
-   [clojure.repl :refer :all]
-   [clojure.tools.namespace.repl :refer [refresh]]
-   [duct.core :as duct]
-   [duct.core.repl :as duct-repl]
-   [duct.repl.figwheel :refer [cljs-repl]]
-   [eftest.runner :as eftest]
-   [fipp.edn :refer [pprint]]
-   [integrant.core :as ig]
-   [integrant.repl :refer [clear halt go init prep reset]]
-   [integrant.repl.state :refer [config system]]))
+  (:require [clojure.repl :refer :all]
+            [fipp.edn :refer [pprint]]
+            [clojure.tools.namespace.repl :refer [refresh]]
+            [clojure.java.io :as io]
+            [duct.core :as duct]
+            [duct.core.repl :as duct-repl]
+            [duct.repl.figwheel :refer [cljs-repl]]
+            [eftest.runner :as eftest]
+            [integrant.core :as ig]
+            [integrant.repl :refer [clear halt go init prep reset]]
+            [integrant.repl.state :refer [config system]]))
 
 (duct/load-hierarchy)
 
 (defn read-config []
-  (duct/read-config (io/resource "dev.edn")))
+  (duct/read-config (io/resource "mortgage_calc/config.edn")))
 
 (defn test []
   (eftest/run-tests (eftest/find-tests "test")))
+
+(def profiles
+  [:duct.profile/dev :duct.profile/local])
 
 (clojure.tools.namespace.repl/set-refresh-dirs "dev/src" "src" "test")
 
 (when (io/resource "local.clj")
   (load "local"))
 
-(integrant.repl/set-prep! (comp duct/prep read-config))
-
-;; helpers for interacting with db
-
-(defn db []
-  (-> system (ig/find-derived-1 :duct.database/sql) val :spec))
-
-(defn q [sql]
-  (jdbc/query (db) sql))
+(integrant.repl/set-prep! #(duct/prep-config (read-config) profiles))

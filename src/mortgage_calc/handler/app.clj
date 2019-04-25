@@ -1,19 +1,16 @@
 (ns mortgage-calc.handler.app
   (:require
    [clojure.java.io :as io]
-   [compojure.core :refer :all]
+   [compojure.core :refer (GET)]
    [integrant.core :as ig]
    [ring.middleware.webjars :refer [wrap-webjars]]))
 
-(def handler
-  (GET "/" []
-    ;; TODO: what's this?
-    {:body {:example "data"}}
-    (io/resource "mortgage_calc/handler/app/app.html")))
+(def app (slurp (io/resource "mortgage_calc/handler/app/app.html")))
 
-(def app
-  (-> handler
+(def handler
+  (-> (GET "/" [] app)
       wrap-webjars))
 
 (defmethod ig/init-key :mortgage-calc.handler/app [_ options]
-  app)
+  handler)
+
